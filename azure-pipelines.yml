@@ -1,0 +1,48 @@
+# ASP.NET Core (.NET Framework)
+# Build and test ASP.NET Core projects targeting the full .NET Framework.
+# Add steps that publish symbols, save build artifacts, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+
+trigger:
+- main
+# このパイプラインは、'main' ブランチに対する変更があった場合にトリガーされます。
+
+pool:
+  vmImage: 'windows-latest'
+# ビルドには最新のWindows VMイメージが使用されます。
+
+variables:
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+# ビルドに使用される変数を定義します。ここではソリューションファイル、ビルドプラットフォーム、ビルド設定を指定しています。
+
+steps:
+- task: NuGetToolInstaller@1
+# NuGet ツールをインストールします。
+
+- task: NuGetCommand@2
+  inputs:
+    restoreSolution: '$(solution)'
+# NuGetを使用して、指定されたソリューションファイルの依存関係を復元します。
+
+- task: DotNetCoreCLI@2
+  displayName: Build
+  inputs:
+    command: build
+    projects: '**/*.csproj'
+    arguments: '--configuration $(buildConfiguration)'
+# .NET Core CLIを使用してプロジェクトをビルドします。ここでは、すべてのcsprojファイルに対してRelease設定でビルドを実行します。
+
+- task: DotNetCoreCLI@2
+  inputs:
+    command: publish
+    publishWebProjects: True
+    arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+# プロジェクトをパブリッシュします。ビルド成果物はArtifact Staging Directoryに出力されます。
+
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: '$(Build.ArtifactStagingDirectory)' 
+    artifactName: 'webapp-artifact'
+# ビルド成果物をパイプラインのアーティファクトとして公開します。これにより、後続のステップやジョブで使用可能になります。
